@@ -1,0 +1,505 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Roles {
+  Id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  RoleId   Int     @unique // 1, 2, 3
+  Name     String  @unique // Admin, ProjectManager, Customer
+  IsActive Boolean @default(true)
+
+  Users Users[]
+}
+
+model Users {
+  Id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  FullName  String
+  email     String    @unique
+  password  String
+  RoleId    Int
+  IsActive  Boolean
+  CreatedAt DateTime  @default(now())
+  UpdatedAt DateTime?
+  mobile    String?
+  location  String?
+
+  Role Roles @relation(fields: [RoleId], references: [RoleId])
+
+  Rfqs                Rfqs[]
+  RfqVendorAssignment RfqVendorAssignment[]
+  uploadedAttachments Attachment[]
+  passwordResetTokens PasswordResetToken[]
+  vendorOnboarding    VendorOnboarding?
+  vendorPayouts       VendorPayout[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user Users @relation(fields: [userId], references: [Id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model InternalRfq {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  rfqListId String  @unique @db.ObjectId
+  rfqList   RfqList @relation(fields: [rfqListId], references: [Id])
+
+  rfqTitle        String
+  rfqDescription  String
+  attachments     Attachment[] // ✅
+  createdByUserId String       @db.ObjectId
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model RfqList {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Customer RFQ
+  rfqId String @unique @db.ObjectId
+  rfq   Rfqs   @relation(fields: [rfqId], references: [Id], onDelete: Cascade)
+
+  // 🔄 Current workflow status
+  statusId String
+  status   RfqStatus @relation(fields: [statusId], references: [codeId])
+
+  // PM action flag
+  isInternalRfqCreated Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  internalRfq       InternalRfq?
+  vendorAssignments RfqVendorAssignment[]
+  customerQuote     CustomerQuote?
+  purchaseOrder     PurchaseOrder?
+}
+
+model RfqVendorAssignment {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  rfqListId String  @db.ObjectId
+  rfqList   RfqList @relation(fields: [rfqListId], references: [Id])
+
+  vendorUserId String @db.ObjectId
+  vendorUser   Users  @relation(fields: [vendorUserId], references: [Id])
+
+  statusCode String
+  status     VendorAssignmentStatus @relation(fields: [statusCode], references: [code])
+
+  quotes VendorQuote[]
+
+  isActive Boolean @default(true)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([rfqListId, vendorUserId])
+}
+
+model Rfqs {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name             String
+  email            String
+  company          String
+  projectType      String
+  budgetRange      String?
+  timeline         String?
+  briefDescription String
+
+  isEditable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdByUserId String @db.ObjectId
+  createdByUser   Users  @relation(fields: [createdByUserId], references: [Id], onDelete: Cascade)
+
+  attachments Attachment[] // ✅
+
+  rfqList RfqList? @relation
+
+  // customerQuote CustomerQuote?
+
+  @@index([Id, createdByUserId])
+}
+
+model RfqStatus {
+  Id        String   @id @default(auto()) @map("_id") @db.ObjectId // DB primary key
+  codeId    String   @unique // e.g. RFQ_001, RFQ_002
+  code      String   @unique // INTERNAL_RFQ_CREATED
+  label     String // Internal RFQ created
+  createdAt DateTime @default(now())
+
+  rfqLists RfqList[]
+}
+
+model VendorAssignmentStatus {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code  String @unique // NEW, SUBMITTED, CANCELLED
+  label String // New, Submitted, Cancelled
+
+  createdAt DateTime @default(now())
+
+  assignments RfqVendorAssignment[]
+}
+
+model VendorQuoteStatus {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code      String   @unique // ASSIGNED, MARKED_FOR_REVIEW, ACCEPTED, REJECTED
+  label     String // Assigned, Marked for review, Accepted, Rejected
+  createdAt DateTime @default(now())
+
+  quotes VendorQuote[]
+}
+
+model VendorQuote {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Assignment context
+  rfqVendorAssignmentId String              @db.ObjectId
+  assignment            RfqVendorAssignment @relation(fields: [rfqVendorAssignmentId], references: [Id])
+
+  // 💰 Quote details
+  amount     Float // Quote amount (USD)
+  validUntil DateTime? // Optional expiry
+  notes      String? // Optional notes from vendor
+
+  // 🔄 Status (THIS is correct place)
+  statusCode String
+  status     VendorQuoteStatus @relation(fields: [statusCode], references: [code])
+
+  // 📄 Snapshot of scope shown to vendor
+  scopeDescription String // From Internal RFQ (copied)
+  attachments      Attachment[]
+  createdAt        DateTime     @default(now())
+}
+
+model CustomerQuoteStatus {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code  String @unique // NEW, SENT, ACCEPTED, REJECTED
+  label String // New, Sent to Customer, Accepted, Rejected
+
+  createdAt DateTime @default(now())
+
+  customerQuotes CustomerQuote[]
+}
+
+model CustomerQuote {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Relationships
+  //customerRfqId String @db.ObjectId
+  rfqListId String @db.ObjectId
+
+  //customerRfq Rfqs @relation(fields: [customerRfqId], references: [Id], onDelete: Cascade)
+
+  rfqList RfqList @relation(fields: [rfqListId], references: [Id], onDelete: Cascade)
+
+  // 💰 Commercials
+  sellPrice Float
+
+  notes String?
+
+  // 🔄 Customer decision
+  statusCode String
+  status     CustomerQuoteStatus @relation(fields: [statusCode], references: [code])
+
+  // 🕒 Audit
+  createdAt   DateTime     @default(now())
+  sentAt      DateTime?
+  decidedAt   DateTime?
+  attachments Attachment[]
+  // @@unique([customerRfqId]) // 🔒 one customer quote per RFQ
+  // PurchaseOrder PurchaseOrder[]
+
+  @@unique([rfqListId]) // 🔒 one customer quote per RFQ
+}
+
+model Attachment {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Optional relations (ONLY ONE should be set per row)
+  rfqId           String? @db.ObjectId
+  internalRfqId   String? @db.ObjectId
+  vendorQuoteId   String? @db.ObjectId
+  customerQuoteId String? @db.ObjectId
+  purchaseOrderId String? @db.ObjectId
+  invoiceId       String? @db.ObjectId
+
+  rfq           Rfqs?          @relation(fields: [rfqId], references: [Id], onDelete: Cascade)
+  internalRfq   InternalRfq?   @relation(fields: [internalRfqId], references: [Id], onDelete: Cascade)
+  vendorQuote   VendorQuote?   @relation(fields: [vendorQuoteId], references: [Id], onDelete: Cascade)
+  customerQuote CustomerQuote? @relation(fields: [customerQuoteId], references: [Id], onDelete: Cascade)
+  purchaseOrder PurchaseOrder? @relation(fields: [purchaseOrderId], references: [Id], onDelete: Cascade)
+  invoice       Invoice?       @relation(fields: [invoiceId], references: [Id], onDelete: Cascade)
+
+  documentType String
+  description  String?
+  // 📄 File metadata
+  fileName     String
+  fileUrl      String
+  fileType     String?
+  fileSize     Int?
+
+  uploadedByUserId String? @db.ObjectId
+  uploadedByUser   Users?  @relation(fields: [uploadedByUserId], references: [Id])
+
+  createdAt DateTime @default(now())
+
+  @@index([rfqId])
+  @@index([internalRfqId])
+  @@index([vendorQuoteId])
+  @@index([purchaseOrderId])
+  @@index([customerQuoteId])
+  @@index([invoiceId])
+}
+
+model PurchaseOrder {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Context
+  rfqListId String @db.ObjectId
+
+  rfqList RfqList @relation(fields: [rfqListId], references: [Id], onDelete: Cascade)
+
+  // 📝 PO details
+  description String?
+
+  // 🔄 Status
+  statusCode String
+  status     PurchaseOrderStatus @relation(fields: [statusCode], references: [code])
+
+  // 📎 Attachments
+  attachments   Attachment[]
+  invoices      Invoice[]
+  payments      Payment[]
+  vendorPayouts VendorPayout[]
+
+  // 🕒 Audit
+  createdByUserId String   @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([rfqListId]) // one PO per accepted RFQ (initially)
+}
+
+model PurchaseOrderStatus {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code  String @unique
+  label String
+
+  createdAt DateTime @default(now())
+
+  purchaseOrders PurchaseOrder[]
+}
+
+model Invoice {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  purchaseOrderId String        @db.ObjectId
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [Id], onDelete: Cascade)
+
+  // Who & whom
+  issuedBy InvoiceIssuedBy
+  issuedTo InvoiceIssuedTo
+
+  invoiceNumber String
+  description   String?
+  amount        Int
+
+  statusCode InvoiceStatus
+  typeCode   InvoiceType
+
+  createdByUserId String @db.ObjectId
+
+  issuedAt DateTime  @default(now())
+  dueDate  DateTime?
+  paidAt   DateTime?
+
+  attachments   Attachment[]
+  payments      Payment[]
+  vendorPayouts VendorPayout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([invoiceNumber])
+  @@index([purchaseOrderId])
+}
+
+enum InvoiceIssuedBy {
+  VENDOR
+  PM
+}
+
+enum InvoiceIssuedTo {
+  PM
+  CUSTOMER
+}
+
+enum InvoiceType {
+  PARTIAL // 50%, milestone, etc.
+  FINAL
+  ADJUSTMENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+model InvoiceCounter {
+  Id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  year      Int      @unique
+  lastValue Int
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Context
+  purchaseOrderId String @db.ObjectId
+  invoiceId       String @db.ObjectId
+
+  purchaseOrder PurchaseOrder? @relation(fields: [purchaseOrderId], references: [Id], onDelete: Cascade)
+  invoice       Invoice?       @relation(fields: [invoiceId], references: [Id], onDelete: Cascade)
+
+  // 💳 Stripe
+  stripeCheckputSessionId String? @unique
+  stripePaymentIntentId   String?
+  stripeClientSecret      String?
+  stripeChargeId          String?
+  stripeCustomerId        String?
+
+  amount   Int // in cents
+  currency String // USD
+
+  // 🔄 Status
+  status PaymentStatus
+  // requires_payment_method | requires_confirmation | processing | succeeded | canceled | failed
+
+  // 🧾 Metadata
+  failureReason  String?
+  refundedAmount Int? // in cents
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([purchaseOrderId])
+  @@index([invoiceId])
+}
+
+enum PaymentStatus {
+  PENDING // Payment intent created, not yet attempted
+  REQUIRES_ACTION // 3DS / authentication required
+  PROCESSING // Stripe is processing payment
+  SUCCEEDED // Payment successful ✅
+  FAILED // Payment failed ❌
+  CANCELLED // User cancelled payment
+  REFUNDED // Fully refunded
+  PARTIALLY_REFUNDED
+}
+
+model PasswordResetRateLimit {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([ip])
+}
+
+//new vendor onboarding code
+
+enum VendorOnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  RESTRICTED
+}
+
+model VendorOnboarding {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Vendor
+  userId String @unique @db.ObjectId
+  user   Users  @relation(fields: [userId], references: [Id])
+
+  // 🔑 Stripe
+  stripeConnectedAccountId String? @unique
+
+  // 🧭 State
+  status VendorOnboardingStatus @default(NOT_STARTED)
+
+  // 🔍 Stripe capability mirrors
+  chargesEnabled Boolean @default(false)
+  payoutsEnabled Boolean @default(false)
+
+  // 🔗 Optional onboarding link
+  onboardingUrl String?
+
+  // 🕒 Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum VendorPayoutStatus {
+  PENDING
+  READY
+  PROCESSING
+  PAID
+  FAILED
+}
+
+model VendorPayout {
+  Id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // 🔗 Vendor (User with vendor role)
+  userId String @db.ObjectId
+  user   Users  @relation(fields: [userId], references: [Id])
+
+  // 🔗 Business context
+  invoiceId String  @db.ObjectId
+  invoice   Invoice @relation(fields: [invoiceId], references: [Id])
+
+  purchaseOrderId String        @db.ObjectId
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [Id])
+
+  // 💰 Amounts (stored explicitly)
+  grossAmount  Int? // customer paid (optional but recommended)
+  vendorAmount Int? // what vendor receives
+  platformFee  Int? // your margin
+
+  // 🔑 Stripe
+  stripeTransferId String? @unique
+
+  // 🧭 State
+  status VendorPayoutStatus @default(PENDING)
+
+  // 🕒 Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  paidAt    DateTime?
+}
