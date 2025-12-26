@@ -3,12 +3,12 @@ import prisma from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { getAuthUser } from "@/utils/auth";
 
-const stripe = getStripe();
 
 export async function GET(
   req, { params }
 ) {
   try {
+    const stripe = getStripe();
     const {invoiceId} = await params;
     const payoutId = invoiceId;
     

@@ -3,9 +3,9 @@ import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { getStripe } from "@/lib/stripe";
 
-const stripe = getStripe();
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe();
     const token = req.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

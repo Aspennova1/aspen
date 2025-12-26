@@ -8,9 +8,9 @@ type Props = {
   params: { invoiceId: string };
 };
 
-const stripe = getStripe();
 
 const PaymentPage = async({params}: Props)=>{
+    const stripe = getStripe();
     const { invoiceId } = await params;
     const user = await getAuthUser();
 

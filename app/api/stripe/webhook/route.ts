@@ -7,9 +7,9 @@ import { formatCurrency } from "@/lib/formatters";
 import PayReceiptEmail from '@/components/email/PayReceiptEmail'
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const stripe = getStripe();
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 
