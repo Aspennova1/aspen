@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {Resend} from 'resend'
-import Stripe from "stripe";
-import PayReceiptEmail from '@/components/email/PayReceiptEmail';
-import ResetPasswordEmail from "@/components/email/ResetPasswordEmail";
+// import Stripe from "stripe";
+// import PayReceiptEmail from '@/components/email/PayReceiptEmail';
+// import ResetPasswordEmail from "@/components/email/ResetPasswordEmail";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function GET() {
   try {

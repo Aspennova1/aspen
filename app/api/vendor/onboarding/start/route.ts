@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
+const stripe = getStripe();
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get("token")?.value;

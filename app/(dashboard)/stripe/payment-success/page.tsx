@@ -1,7 +1,7 @@
 import PayReceiptEmail from '@/components/email/PayReceiptEmail';
 import { Button } from '@/components/ui/button';
 import prisma from '@/lib/prisma';
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { getAuthUser } from '@/utils/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -25,7 +25,7 @@ export default async function PaymentSuccess({searchParams}:{searchParams:{payme
     const {payment_intent} = await searchParams;
     const user = await getAuthUser();
     // const paymentIntent  = await stripe.checkout.sessions.retrieve(session_id);
-    const paymentIntent  = await stripe.paymentIntents.retrieve(payment_intent);
+    const paymentIntent  = await getStripe().paymentIntents.retrieve(payment_intent);
 
     if(!paymentIntent.metadata.purchaseOrderId) return notFound();
     if(!paymentIntent.metadata.invoiceId) return notFound();

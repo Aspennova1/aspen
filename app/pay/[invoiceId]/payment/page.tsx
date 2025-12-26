@@ -1,4 +1,4 @@
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getAuthUser } from "@/utils/auth";
 import { notFound, redirect } from "next/navigation";
 import CheckoutForm from "./_components/CheckoutForm";
@@ -7,6 +7,8 @@ import prisma from "@/lib/prisma";
 type Props = {
   params: { invoiceId: string };
 };
+
+const stripe = getStripe();
 
 const PaymentPage = async({params}: Props)=>{
     const { invoiceId } = await params;

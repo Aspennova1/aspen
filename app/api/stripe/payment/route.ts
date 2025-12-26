@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { verifyToken } from "@/lib/jwt";
 
+const stripe = getStripe();
 export async function POST(req: NextRequest) {
   try {
     // 1️⃣ Auth

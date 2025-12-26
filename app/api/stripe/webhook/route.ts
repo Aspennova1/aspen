@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import prisma from "@/lib/prisma";
 import Stripe from "stripe";
 import {Resend} from 'resend'
@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/formatters";
 import PayReceiptEmail from '@/components/email/PayReceiptEmail'
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const stripe = getStripe();
 
 export async function POST(req: NextRequest) {
   const body = await req.text();

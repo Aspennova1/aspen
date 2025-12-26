@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getAuthUser } from "@/utils/auth";
+
+const stripe = getStripe();
 
 export async function GET(
   req, { params }
