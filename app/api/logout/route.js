@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import {Resend} from 'resend'
+// import {Resend} from 'resend'
 // import Stripe from "stripe";
 // import PayReceiptEmail from '@/components/email/PayReceiptEmail';
 // import ResetPasswordEmail from "@/components/email/ResetPasswordEmail";

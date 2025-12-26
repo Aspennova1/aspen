@@ -1,13 +1,14 @@
 import PayReceiptEmail from '@/components/email/PayReceiptEmail';
 import { Button } from '@/components/ui/button';
 import prisma from '@/lib/prisma';
+import { getResend } from '@/lib/resend';
 import { getStripe } from '@/lib/stripe'
 import { getAuthUser } from '@/utils/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Resend } from 'resend';
+// import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 // export default async function PaymentSuccess({searchParams}:{searchParams:{session_id: string}}) {
 //     const {session_id} = await searchParams;
@@ -65,6 +66,7 @@ export default async function PaymentSuccess({searchParams}:{searchParams:{payme
           },
         });
 
+        const resend = getResend(); 
         await resend.emails.send({
           from: `Support <${process.env.SENDER_EMAIL}>`,
           to: email,

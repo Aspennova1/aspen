@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import prisma from "@/lib/prisma";
 import Stripe from "stripe";
-import {Resend} from 'resend'
-import { formatCurrency } from "@/lib/formatters";
 import PayReceiptEmail from '@/components/email/PayReceiptEmail'
+import { getResend } from "@/lib/resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
@@ -68,9 +66,10 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        const resend = getResend();
         await resend.emails.send({
           from: `Support <${process.env.SENDER_EMAIL}>`,
-          to: 'dk40828@gmail.com',
+          to: email,
           subject: "Order Confirmation",
           react: PayReceiptEmail({id: invoiceId, company:'Aspen Groups', name, email, createdAt: paymentIntent.created*1000, pricePaidInCents: paymentIntent.amount }),
         })

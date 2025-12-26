@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from 'crypto';
-import { Resend } from "resend";
 import ResetPasswordEmail from "@/components/email/ResetPasswordEmail";
 import { headers } from "next/headers";
 import { checkForgotPasswordRateLimit, normalizeIp } from "@/lib/rateLimiter";
-import { normalize } from "path";
+import { getResend } from "@/lib/resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export function generateResetToken() {
   const token = crypto.randomBytes(32).toString("hex");
@@ -103,6 +101,7 @@ export async function POST(req: Request) {
 // }
 
 async function sendResetEmail(userEmail: string, userName: string, resetUrl: string){
+    const resend = getResend();
     await resend.emails.send({
         from: `Support <${process.env.SENDER_EMAIL}>`,
         to: userEmail,

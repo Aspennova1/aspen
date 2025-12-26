@@ -1,10 +1,6 @@
 import { getCustomerAcceptedRFQsAction } from "@/utils/actions";
 import CustomerAcceptedRfqCard from "@/components/customer/CustomerAcceptedRfqCard";
-import { Resend } from "resend";
 import PayReceiptEmail from "@/components/email/PayReceiptEmail";
-import { Button } from "@/components/ui/button";
-
-const resend = new Resend('re_5zhV2EqZ_crsiRRqUgKUJvquFxUsswZS6');
 
 export default async function CustomerAcceptedRFQsPage() {
   const rfqs = await getCustomerAcceptedRFQsAction();
