@@ -2,24 +2,31 @@ import { BlobServiceClient } from '@azure/storage-blob';
 
 const containerName = 'aspencompany';
 
-// Azure credentials
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string;
+let blobServiceClient: BlobServiceClient | null = null;
 
-if (!connectionString) {
-  throw new Error('Missing AZURE_STORAGE_CONNECTION_STRING');
+/**
+ * Lazily create BlobServiceClient (runtime only)
+ */
+function getContainerClient() {
+  if (!blobServiceClient) {
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+    if (!connectionString) {
+      throw new Error('AZURE_STORAGE_CONNECTION_STRING is missing');
+    }
+
+    blobServiceClient =
+      BlobServiceClient.fromConnectionString(connectionString);
+  }
+
+  return blobServiceClient.getContainerClient(containerName);
 }
-
-const blobServiceClient =
-  BlobServiceClient.fromConnectionString(connectionString);
-
-const containerClient =
-  blobServiceClient.getContainerClient(containerName);
-
 /**
  * Upload image to Azure Blob Storage
  */
 export const uploadAttachment = async (file: File) => {
 
+  const containerClient = getContainerClient(); 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   
@@ -44,6 +51,7 @@ export const uploadAttachment = async (file: File) => {
  * Delete image from Azure Blob Storage
  */
 export const deleteAttachment = async (url: string) => {
+  const containerClient = getContainerClient(); 
   const blobName = url.split('/').pop();
   if (!blobName) throw new Error('Invalid URL');
 
