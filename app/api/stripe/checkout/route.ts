@@ -1,20 +1,20 @@
-// import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 // import Stripe from "stripe";
 // import prisma from "@/lib/prisma";
 // import { verifyToken } from "@/lib/jwt";
 
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-// export async function POST(req: NextRequest) {
-//   try {
+export async function POST(req: NextRequest) {
+  try {
 //     // 🔐 Auth (Customer only)
-//     const token = req.cookies.get("token")?.value;
-//     if (!token) {
-//       return NextResponse.json(
-//         { message: "Unauthorized" },
-//         { status: 401 }
-//       );
-//     }
+    const token = req.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
 //     const payload: any = await verifyToken(token);
 
@@ -164,17 +164,18 @@
 //       },
 //     });
 
-//     return NextResponse.json(
-//       {
-//         checkoutUrl: session.url,
-//       },
-//       { status: 200 }
-//     );
-//   } catch (error: any) {
-//     console.error(
-//       "Stripe checkout error:",
-//       error
-//     );
+    return NextResponse.json(
+      {
+        checkoutUrl: 'Dummy',
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error(
+      "Stripe checkout error:",
+      error
+    );
+  }
 
 //     return NextResponse.json(
 //       {
@@ -185,4 +186,4 @@
 //       { status: 500 }
 //     );
 //   }
-// }
+}
