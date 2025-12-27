@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
   "include": [
@@ -28,7 +34,21 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
-, "utils/links.jsx", "app/api/login/route.js", "lib/prisma.js", "app/api/me/route.js", "app/api/pm/rfq-list/route.js", "app/api/pm/internalrfq/route.js", "app/api/pm/rfq-list/[rfqlist]/quotes/route.js", "app/api/pm/vendor-quotes/[quoteId]/status/route.js", "app/api/rfqs/[Id]/route.js", "app/api/customer/customer-quotes/[quoteId]/decision/route.s", "app/api/pm/vendor-invoices/[invoiceId]/payout/route.js", "app/api/pm/vendor-invoices/[invoiceId]/execute/route.js"  ],
-  "exclude": ["node_modules"]
+    "**/*.mts",
+    "utils/links.jsx",
+    "app/api/login/route.js",
+    "lib/prisma.js",
+    "app/api/me/route.js",
+    "app/api/pm/rfq-list/route.js",
+    "app/api/pm/internalrfq/route.js",
+    "app/api/pm/rfq-list/[rfqlist]/quotes/route.js",
+    "app/api/pm/vendor-quotes/[quoteId]/status/route.js",
+    "app/api/rfqs/[Id]/route.js",
+    "app/api/customer/customer-quotes/[quoteId]/decision/route.s",
+    "app/api/pm/vendor-invoices/[invoiceId]/payout/route.js",
+    "app/api/pm/vendor-invoices/[invoiceId]/execute/route.js"
+, "next.config.ts"  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
