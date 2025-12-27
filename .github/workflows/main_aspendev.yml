@@ -26,14 +26,16 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm run build
+
+      - name: move static files
+        run:  mv ./build/static ./build/standalone/build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: .
+          name: app
+          path: ./build/standalone    
 
   deploy:
     runs-on: ubuntu-latest
